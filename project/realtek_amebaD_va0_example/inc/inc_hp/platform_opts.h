@@ -279,7 +279,7 @@
 #define CONFIG_EXAMPLE_NONBLOCK_CONNECT	0
 
 /* For socket TCP bidirectional transmission example */
-#define CONFIG_EXAMPLE_SOCKET_TCP_TRX	0
+#define CONFIG_EXAMPLE_SOCKET_TCP_TRX	1
 
 /* For ssl download example */
 #define CONFIG_EXAMPLE_SSL_DOWNLOAD      0

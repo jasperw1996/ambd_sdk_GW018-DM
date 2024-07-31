@@ -4,29 +4,94 @@
 #include <lwip/sockets.h>
 //#include <osdep_api.h>
 #include <osdep_service.h>
+#include "serial_api.h"
+#include "serial_ex_api.h"
 
 #define SERVER_PORT     80
 #define LISTEN_QLEN     2
+
+#define UART_TX    	_PA_18	//UART0  TX
+#define UART_RX    	_PA_19	//UART0  RX
+#define UART_RTS  	_PA_16	//UART0  RTS
+#define UART_CTS   	_PA_17	//UART0  CTS
 
 static int tx_exit = 0, rx_exit = 0;
 //static _Sema tcp_tx_rx_sema;
 static _sema tcp_tx_rx_sema;
 
+// i`m not sure if this is needed
+// maybe UART can work in separate tasks
+// maybe later i`ll check
+static _sema uart_tx_rx_sema;
+
+//#define Z_UART_DEBUG
+serial_t sobj;
+
+
+void uart_send_data(serial_t *sobj, void *data, int count)
+{
+    unsigned int i=0;
+    rtw_down_sema(&uart_tx_rx_sema);
+    for (i=0;i<count;i++) {
+        serial_putc(sobj, ((char *)data)[i]);
+    }
+    rtw_up_sema(&uart_tx_rx_sema);
+}
+
+
 static void tx_thread(void *param)
 {
 	int client_fd = * (int *) param;
 	unsigned char buffer[1024];
-	memset(buffer, 1, sizeof(buffer));
+	memset(buffer, 0, sizeof(buffer));
 	printf("\n%s start\n", __FUNCTION__);
 
 	while(1) {
 		int ret = 0;
 
-		//RtlDownSema(&tcp_tx_rx_sema);		
-		rtw_down_sema(&tcp_tx_rx_sema);
-		ret = send(client_fd, buffer, sizeof(buffer), 0); 
-		//RtlUpSema(&tcp_tx_rx_sema);		
-		rtw_up_sema(&tcp_tx_rx_sema);
+
+        // simple buffering
+        // to avoid sending frame with few bytes
+        // if there is more in the pipe
+        int i = 0;
+        int j = 0;
+        for (i=0;i<sizeof(buffer);i++){
+            if (serial_readable(&sobj))
+            {
+                rtw_down_sema(&uart_tx_rx_sema);
+                buffer[j++] = serial_getc(&sobj);
+                rtw_up_sema(&uart_tx_rx_sema);
+            }
+        }
+
+        if (j>0)
+        {
+#ifdef Z_UART_DEBUG
+            printf("%d bytes UART->TCP: ", j);
+            int i = 0;
+            for (i = 0; i < j ; i++)
+            {
+                printf("0x%x ",buffer[i]);
+            }
+            printf("\n");
+#endif
+            if (j<sizeof(buffer)){
+                rtw_down_sema(&tcp_tx_rx_sema);
+                ret = send(client_fd, buffer, j, 0);
+                rtw_up_sema(&tcp_tx_rx_sema);
+            }
+            else
+            {
+                printf("buff corrupted");
+            }
+        }
+        else
+        {
+            if (rx_exit){
+                goto exit;
+            }
+            continue; // avoid quit
+        }
 
 		if(ret <= 0)
 			goto exit;
@@ -50,12 +115,22 @@ static void rx_thread(void *param)
 		int ret = 0, sock_err = 0;
 		size_t err_len = sizeof(sock_err);
 
-		//RtlDownSema(&tcp_tx_rx_sema);		
 		rtw_down_sema(&tcp_tx_rx_sema);
 		ret = recv(client_fd, buffer, sizeof(buffer), MSG_DONTWAIT);
 		getsockopt(client_fd, SOL_SOCKET, SO_ERROR, &sock_err, &err_len);
-		//RtlUpSema(&tcp_tx_rx_sema);		
 		rtw_up_sema(&tcp_tx_rx_sema);
+        if (ret > 0){
+#ifdef Z_UART_DEBUG
+            printf("%d bytes TCP->UART: ", ret);
+            int i=0;
+            for (i=0;i<ret;i++)
+            {
+                printf("0x%x ",buffer[i]);
+            }
+            printf("\n");
+#endif
+            uart_send_data( &sobj, buffer, ret);
+        }
 
 		// ret == -1 and socket error == EAGAIN when no data received for nonblocking
 		if((ret == -1) && ((sock_err == EAGAIN)
@@ -108,7 +183,6 @@ static void example_socket_tcp_trx_thread(void *param)
 		if(client_fd >= 0) {
 			tx_exit = 1;
 			rx_exit = 1;
-			//RtlInitSema(&tcp_tx_rx_sema, 1);			
 			rtw_init_sema(&tcp_tx_rx_sema, 1);
 
 			if(xTaskCreate(tx_thread, ((const char*)"tx_thread"), 512, &client_fd, tskIDLE_PRIORITY + 1, NULL) != pdPASS)
@@ -132,7 +206,6 @@ static void example_socket_tcp_trx_thread(void *param)
 					vTaskDelay(1000);
 			}
 
-			//RtlFreeSema(&tcp_tx_rx_sema);			
 			rtw_free_sema(&tcp_tx_rx_sema);
 		}
 	}
@@ -144,6 +217,16 @@ exit:
 
 void example_socket_tcp_trx_1(void)
 {
+	sobj.uart_idx = 0;
+
+    // mbed uart test
+    rtw_init_sema(&uart_tx_rx_sema, 1);
+    serial_init(&sobj,UART_TX,UART_RX);
+    serial_baud(&sobj,115200);
+    serial_format(&sobj, 8, ParityNone, 1);
+	serial_rx_fifo_level(&sobj, FifoLvHalf);
+	serial_set_flow_control(&sobj, FlowControlRTSCTS, UART_RTS, UART_CTS);    // Pin assignment is ignored
 	if(xTaskCreate(example_socket_tcp_trx_thread, ((const char*)"example_socket_tcp_trx_thread"), 1024, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS)
 		printf("\n\r%s xTaskCreate(example_socket_tcp_trx_thread) failed", __FUNCTION__);
+	rtw_free_sema(&tcp_tx_rx_sema);
 }

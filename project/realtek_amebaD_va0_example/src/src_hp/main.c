@@ -2,6 +2,15 @@
 #include "ameba_soc.h"
 #include "main.h"
 
+#include "device.h"
+#include "serial_api.h"
+#include "gpio_api.h"
+
+#define UART_TX    _PA_18
+#define UART_RX    _PA_19
+#define UART_RTS  	_PA_16	//UART0  RTS
+#define UART_CTS   	_PA_17	//UART0  CTS
+
 #if defined(CONFIG_FTL_ENABLED)
 #include "ftl_int.h"
 extern const u8 ftl_phy_page_num;
@@ -197,6 +206,7 @@ int main(void)
 	app_init_debug();
 
 	//DBG_8195A("M4U:%d \n", RTIM_GetCount(TIMM05));
+	DiagPrintf("!!!!!!!!!!!!!!!! Hello from KM4 1!!!!!!!!!!!!!!!!!!!!!!\n");
 	/* Enable Schedule, Start Kernel */
 	vTaskStartScheduler();
 }
