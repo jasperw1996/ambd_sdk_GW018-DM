@@ -190,7 +190,7 @@ static void example_socket_tcp_trx_thread(void *param)
 			else
 				tx_exit = 0;
 
-			vTaskDelay(10);
+			// vTaskDelay(10);
 
 			if(xTaskCreate(rx_thread, ((const char*)"rx_thread"), 512, &client_fd, tskIDLE_PRIORITY + 1, NULL) != pdPASS)
 				printf("\n\r%s xTaskCreate(rx_thread) failed", __FUNCTION__);
