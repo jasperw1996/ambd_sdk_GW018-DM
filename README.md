@@ -154,7 +154,7 @@ serial:
   port: tcp://<your-gateway-ip>:80
   rtscts: true
 ```
-Start the Zigbee2MQTT addon – and it will try to connect to your gateway. For me, this is working in ~50% of all cases. Sometimes I get this error:
+Start the Zigbee2MQTT addon – and it will try to connect to your gateway. For me, this is working pretty stable now. If you get an error like this, wait a few seconds, restart the addon and try again until it's working :)
 ```
 [2024-07-31 15:33:25] error: 	zh:ezsp:uart: --> Error: Error: {"sequence":-1} after 10000ms
 Error: Failure to connect
@@ -164,4 +164,3 @@ Error: Failure to connect
     at Queue.execute (/app/node_modules/zigbee-herdsman/src/utils/queue.ts:35:20)
     at Socket.<anonymous> (/app/node_modules/zigbee-herdsman/src/adapter/ezsp/driver/uart.ts:152:17)
 ```
-Wait a few seconds, restart the addon and try again until it's working :)
