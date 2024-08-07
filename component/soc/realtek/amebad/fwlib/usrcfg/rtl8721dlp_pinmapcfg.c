@@ -65,7 +65,7 @@ const PMAP_TypeDef pmap_func[]=
 	{_PB_1,		GPIO_PuPd_UP,		GPIO_PuPd_KEEP,		GPIO_PuPd_KEEP,		FALSE}, //
 	{_PB_2,		GPIO_PuPd_UP,		GPIO_PuPd_KEEP,		GPIO_PuPd_KEEP,		FALSE}, //
 	{_PB_3,		GPIO_PuPd_DOWN,		GPIO_PuPd_KEEP,		GPIO_PuPd_KEEP,		FALSE}, //SWD_CLK
-	{_PB_4,		GPIO_PuPd_UP,		GPIO_PuPd_KEEP,		GPIO_PuPd_KEEP,		FALSE}, //Touch0
+	{_PB_4,		GPIO_PuPd_DOWN,		GPIO_PuPd_KEEP,		GPIO_PuPd_KEEP,		FALSE}, //Touch0
 	{_PB_5,		GPIO_PuPd_DOWN,		GPIO_PuPd_KEEP,		GPIO_PuPd_KEEP,		FALSE}, //Touch1
 	{_PB_6,		GPIO_PuPd_DOWN,		GPIO_PuPd_KEEP,		GPIO_PuPd_KEEP,		FALSE}, //Touch2
 	//{_PB_6,		GPIO_PuPd_UP,		GPIO_PuPd_KEEP,		GPIO_PuPd_KEEP,		FALSE},
