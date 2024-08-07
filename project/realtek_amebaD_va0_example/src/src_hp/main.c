@@ -8,8 +8,10 @@
 
 #define UART_TX    _PA_18
 #define UART_RX    _PA_19
-#define UART_RTS  	_PA_16	//UART0  RTS
-#define UART_CTS   	_PA_17	//UART0  CTS
+#define UART_RTS   _PA_16	// UART0  RTS
+#define UART_CTS   _PA_17	// UART0  CTS
+#define LED_RED    _PA_25	//Red LED
+#define LED_BLUE   _PB_22 	//Blue LED
 
 #if defined(CONFIG_FTL_ENABLED)
 #include "ftl_int.h"
@@ -21,6 +23,8 @@ void app_ftl_init(void)
 	ftl_init(ftl_phy_page_start_addr, ftl_phy_page_num);
 }
 #endif
+
+gpio_t led_red;
 
 #if defined(CONFIG_WIFI_NORMAL) && defined(CONFIG_NETWORK)
 extern VOID wlan_network(VOID);
@@ -146,6 +150,13 @@ static void app_dslp_wake(void)
 //default main
 int main(void)
 {
+	// Init red LED
+	gpio_init(&led_red, LED_RED);
+	gpio_dir(&led_red, PIN_OUTPUT);    // Direction: Output
+	gpio_mode(&led_red, PullNone);     // No pull
+
+	gpio_write(&led_red, 1); // turn on red LED
+
 	if (wifi_config.wifi_ultra_low_power &&
 		wifi_config.wifi_app_ctrl_tdma == FALSE) {
 		SystemSetCpuClk(CLK_KM4_100M);
@@ -210,4 +221,3 @@ int main(void)
 	/* Enable Schedule, Start Kernel */
 	vTaskStartScheduler();
 }
-

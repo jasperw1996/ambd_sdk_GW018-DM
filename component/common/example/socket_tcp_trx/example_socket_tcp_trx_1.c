@@ -7,6 +7,8 @@
 #include "serial_api.h"
 #include "serial_ex_api.h"
 
+#include "gpio_api.h"   // mbed
+
 #define SERVER_PORT     80
 #define LISTEN_QLEN     2
 
@@ -14,6 +16,9 @@
 #define UART_RX    	_PA_19	//UART0  RX
 #define UART_RTS  	_PA_16	//UART0  RTS
 #define UART_CTS   	_PA_17	//UART0  CTS
+#define LED_BLUE    _PB_22 	//Blue LED
+
+gpio_t led_blue;
 
 static int tx_exit = 0, rx_exit = 0;
 //static _Sema tcp_tx_rx_sema;
@@ -44,6 +49,7 @@ static void tx_thread(void *param)
 	int client_fd = * (int *) param;
 	unsigned char buffer[1024];
 	memset(buffer, 0, sizeof(buffer));
+	gpio_write(&led_blue, 1); // turn on blue LED
 	printf("\n%s start\n", __FUNCTION__);
 
 	while(1) {
@@ -100,6 +106,7 @@ static void tx_thread(void *param)
 	}
 
 exit:
+	gpio_write(&led_blue, 0); // turn off blue LED
 	printf("\n%s exit\n", __FUNCTION__);
 	tx_exit = 1;
 	vTaskDelete(NULL);
@@ -109,6 +116,7 @@ static void rx_thread(void *param)
 {
 	int client_fd = * (int *) param;
 	unsigned char buffer[1024];
+	gpio_write(&led_blue, 1); // turn on blue LED
 	printf("\n%s start\n", __FUNCTION__);
 
 	while(1) {
@@ -146,6 +154,7 @@ static void rx_thread(void *param)
 	}
 
 exit:
+	gpio_write(&led_blue, 0); // turn off blue LED
 	printf("\n%s exit\n", __FUNCTION__);
 	rx_exit = 1;
 	vTaskDelete(NULL);
@@ -158,8 +167,25 @@ static void example_socket_tcp_trx_thread(void *param)
 	size_t client_addr_size;
 
 	// Delay to wait for IP by DHCP
-	vTaskDelay(10000);
+	int counter = 0;
+
+	// Init blue LED
+	gpio_init(&led_blue, LED_BLUE);
+	gpio_dir(&led_blue, PIN_OUTPUT);    // Direction: Output
+	gpio_mode(&led_blue, PullNone);     // No pull
+
+	while (counter < 20) {
+		if (counter % 2 == 0) {
+			gpio_write(&led_blue, 1); // turn on blue LED
+		} else {
+			gpio_write(&led_blue, 0); // turn off blue LED
+		}
+		counter++;
+		vTaskDelay(500);
+	}
+
 	printf("\nExample: socket tx/rx 1\n");
+	// gpio_write(&led_blue, 1); // uncomment to turn on blue LED permanently
 
 	server_fd = socket(AF_INET, SOCK_STREAM, 0);
 	server_addr.sin_family = AF_INET;
