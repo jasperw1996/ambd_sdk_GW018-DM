@@ -90,11 +90,31 @@ chmod -R 777 ../project_hp/
 Then clean up the environment with `make clean` and try again. Finally you'll have a bunch if images in the `/adsk/image` subdirectory of `project_lp` and `project_hp`. We'll need three of them in the next step to flash the new firmware to the gateway.
 
 ## 4) Flash the firmware to the gateway
+You can flash the new firmware to the gateway using Realtek ImageTool – there is a GUI for windows, but you might also use the Linux CLI from Ameba Arduino SDK. Choose whatever you prefer :)
+
+### a) Flash using ImageTool CLI (Linux)
+Download the [CLI executable from Ameba Arduino SDK](https://github.com/ambiot/ambd_arduino/raw/dev/Arduino_package/ameba_d_tools_linux/upload_image_tool_linux). Grab `km0_boot_all.bin` from `project_lp` as well as `km4_boot_all.bin` and `km0_km4_image2.bin` from `project_hp` out of your build's image folders and put them in the same directory as the ImageTool executable. 
+
+The ImageTool for Linux can put your device into UART download mode automatically. All you have to do is connecting your gateway to your computer like you did before: Power up the gateway first and plugin the USB UART adapter to your computer afterwards. Then start flashing (make sure that your USB UART adapter supports a baudrate of `921600`):
+```
+# make the executable executable if you have not done so before:
+chmod +x upload_image_tool_linux
+
+# Erase flash before flashing new firmware (may not be needed)
+./upload_image_tool_linux "$PWD" /dev/ttyUSB0 ameba_rtl8721csm Enable Enable 921600
+
+# … and let's flash!
+./upload_image_tool_linux "$PWD" /dev/ttyUSB0 ameba_rtl8721csm Enable Disable 921600
+```
+You can see in the logs if the flashing process went well. If not – just flash it again, as long as you stay in `UART_DOWNLOAD` mode, everything should be fine. Make sure that flashing succeeded, then power off the gateway. Fire up minicom and power on the gateway again. You should see some boot logs again, containing `!!!!!!!!!!!!!!!! Hello from KM0 !!!!!!!!!!!!!!!!!!!!!!` and `!!!!!!!!!!!!!!!! Hello from KM4 1!!!!!!!!!!!!!!!!!!!!!!`. After a few seconds, you'll get a shell and can connect to your WiFi.
+
+### b) Flash using ImageTool GUI (Windows)
+
 To prepare the flashing process you will have to reenter "Command Mode". Then, in minicom, after disabling hardware flow control again, type in `reboot uartburn` and press enter to put the device into `UART_DOWNLOAD` mode.
 
-In the next step, you'll need a Windows 7 (+) environment to make use of the Realtek ImageTool located in [/tools/AmebaD/Image_Tool](https://github.com/jasperw1996/ambd_sdk_GW018-DM/tree/dev/tools/AmebaD/Image_Tool). I tried to get it running via Wine, but that didn't work. Use a virtual machine or a Windows installation on a different device.
+In the next step, you'll need a Windows 7 (+) environment to make use of the Realtek ImageTool located in [/tools/AmebaD/Image_Tool](https://github.com/jasperw1996/ambd_sdk_GW018-DM/tree/dev/tools/AmebaD/Image_Tool). Use a virtual machine or a Windows installation on a different device.
 
-Install .NET Framework 3.5, the drivers for your UART adapter and open ImageTool.exe. Click "Chip Select" and choose "AmebaD". Set baudrate to `115200`. If your gateway is still in `UART_DOWNLOAD` mode and all drivers are installed correctly, you should see your UART adapter as a COM port.
+Install .NET Framework 3.5, the drivers for your UART adapter and open ImageTool.exe. Click "Chip Select" and choose "AmebaD". Set baudrate to `115200` or `921600` (faster), if your UART USB adapter supports it. If your gateway is still in `UART_DOWNLOAD` mode and all drivers are installed correctly, you should see your UART adapter as a COM port.
 
 The new firmware is smaller than the old firmware, that's why I erased some parts of the flash manually – this may not be needed, but I think it's "cleaner" (?):
 1) Erase 16 KB starting from `0x08000000`
@@ -105,7 +125,7 @@ Now grab `km0_boot_all.bin` from `project_lp` as well as `km4_boot_all.bin` and 
 
 ![ImageTool settings](imagetool.png)
 
-Click on "Download", wish the best and wait a minute :) You can see in the logs if the flashing process went well. If not – just flash it again, as long as you stay in `UART_DOWNLOAD` mode, everything should be fine. Make sure that flashing succeeded, then poweroff the gateway. Connect it to your Linux machine again, fire up minicom and power on the gateway. You should see some boot logs again, containing `!!!!!!!!!!!!!!!! Hello from KM0 !!!!!!!!!!!!!!!!!!!!!!` and `!!!!!!!!!!!!!!!! Hello from KM4 1!!!!!!!!!!!!!!!!!!!!!!`. After a few seconds, you'll get a shell and can connect to your WiFi.
+Click on "Download", wish the best and wait a minute :) You can see in the logs if the flashing process went well. If not – just flash it again, as long as you stay in `UART_DOWNLOAD` mode, everything should be fine. Make sure that flashing succeeded, then power off the gateway. Connect it to your Linux machine again, fire up minicom and power on the gateway. You should see some boot logs again, containing `!!!!!!!!!!!!!!!! Hello from KM0 !!!!!!!!!!!!!!!!!!!!!!` and `!!!!!!!!!!!!!!!! Hello from KM4 1!!!!!!!!!!!!!!!!!!!!!!`. After a few seconds, you'll get a shell and can connect to your WiFi.
 
 
 ## 5) Connect your gateway to WiFi
