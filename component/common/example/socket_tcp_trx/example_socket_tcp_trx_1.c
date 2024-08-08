@@ -102,7 +102,7 @@ static void tx_thread(void *param)
 		if(ret <= 0)
 			goto exit;
 
-		vTaskDelay(100);
+		// vTaskDelay(100);
 	}
 
 exit:
