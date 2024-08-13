@@ -164,3 +164,32 @@ Error: Failure to connect
     at Queue.execute (/app/node_modules/zigbee-herdsman/src/utils/queue.ts:35:20)
     at Socket.<anonymous> (/app/node_modules/zigbee-herdsman/src/adapter/ezsp/driver/uart.ts:152:17)
 ```
+## 7) Update your gateway over-the-air
+After flashing this firmware to your gateway, you can update/push new firmware files to your device via WiFi. Please note that you have to update the WBRG1 module (the one this repo is made for) and the ZS3L module separately.
+
+### a) Update WBRG1 module
+
+For updating the WBRG1's Realtek chip, I enabled the [OTA update example](https://github.com/jasperw1996/ambd_sdk_GW018-DM/blob/dev/component/common/example/ota_http/example_ota_http.c) and changed a few lines. (If you don't need it, you can disable it by setting `CONFIG_EXAMPLE_OTA_HTTP` to `0` in [platform_opts.h](https://github.com/jasperw1996/ambd_sdk_GW018-DM/blob/dev/project/realtek_amebaD_va0_example/inc/inc_hp/platform_opts.h)).
+
+Set the `HOST` variable in the [OTA update example](https://github.com/jasperw1996/ambd_sdk_GW018-DM/blob/dev/component/common/example/ota_http/example_ota_http.c) to the IP address or hostname of your computer. Then rebuild the firmware. Go to the image folder in `project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/image`, open a terminal there and start a webserver of your choice serving that directory:
+```
+# use a simple python http server …
+python3 -m http.server 8080
+
+# … or maybe NGINX with docker or podman
+podman run --rm -it --name nginx-firmware-server -p 8080:80 -v ../image:/usr/share/nginx/html:ro docker.io/nginx:stable
+```
+Now start the gateway, wait until the blue LED stops blinking, press the reset button for 3-4 seconds and release. You should see your gateway connecting to your webserver a few seconds later, downloading the `OTA_All.bin` firmware file in your image folder. It reboots automatically afterwards – and if everything worked fine, you should see the blue LED blinking for a few seconds again.
+
+### b) Update ZS3L module
+Now that your Zigbee chip's UART connection is exposed via WBRG1 module to your WiFi, you can update its firmware over-the-air, too. We could use the good old "xmodem" protocol for that. 
+
+If you want to learn more about that, you could enter the bootloader of your Zigbee chip manually and use "xmodem" directly, e. g. with minicom. But there are also a bunch of tools out there to automate this. I successfully tried NabuCasa's [Universal Silabs Flasher](https://github.com/NabuCasa/universal-silabs-flasher):
+```
+universal-silabs-flasher --device socket://192.168.0.76:80 flash --firmware "/path/to/your/gecko-bootloader-firmware-file.gbl"
+```
+I built a new, but still buggy firmware (and also created a .gbl file of the stock firmware you can flash back) [here](https://github.com/MattWestb/EFR32-FW/issues/6#issuecomment-2275368851). But you could also create one yourself using "Simplicity Studio" (to create a .bin file) and "Simplicity Commander" (to convert the .bin to .gbl afterwards).
+
+For me, the flashing process hangs at 100% – it seems to work fine, though: If I wait only a few seconds and the repower the device, the Zigbee chip boots up with the new firmware.
+
+**Please note that there is always a risk that you can (soft-)brick your device while flashing a new firmware to it. Do it at your own risk! You might need your USB UART adapter again or an SWD debugger for the ZS3L module in case anything goes wrong.**
