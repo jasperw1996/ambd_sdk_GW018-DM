@@ -288,7 +288,7 @@
 #define CONFIG_EXAMPLE_HTTP_DOWNLOAD	0
 
 /* For http ota update example */
-#define CONFIG_EXAMPLE_OTA_HTTP	0
+#define CONFIG_EXAMPLE_OTA_HTTP	1
 
 /* For https ota update example */
 #define CONFIG_EXAMPLE_OTA_HTTPS	0

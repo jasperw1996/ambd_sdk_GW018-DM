@@ -174,7 +174,7 @@ static void example_socket_tcp_trx_thread(void *param)
 	gpio_dir(&led_blue, PIN_OUTPUT);    // Direction: Output
 	gpio_mode(&led_blue, PullNone);     // No pull
 
-	while (counter < 20) {
+	while (counter < 10) {
 		if (counter % 2 == 0) {
 			gpio_write(&led_blue, 1); // turn on blue LED
 		} else {
