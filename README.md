@@ -190,6 +190,6 @@ universal-silabs-flasher --device socket://<your-gateway-ip>:80 flash --firmware
 ```
 I built a new, but still buggy firmware (and also created a .gbl file of the stock firmware you can flash back) [here](https://github.com/MattWestb/EFR32-FW/issues/6#issuecomment-2275368851). But you could also create one yourself using "Simplicity Studio" (to create a .bin file) and "Simplicity Commander" (to convert the .bin to .gbl afterwards).
 
-For me, the flashing process hangs at 100% – it seems to work fine, though: If I wait only a few seconds and the repower the device, the Zigbee chip boots up with the new firmware.
+For me, the flashing process hangs at 100% – it seems to work fine, though: If I wait only a few seconds and then repower the device, the Zigbee chip boots up with the new firmware.
 
 **Please note that there is always a risk that you can (soft-)brick your device while flashing a new firmware to it. Do it at your own risk! You might need your USB UART adapter again or an SWD debugger for the ZS3L module in case anything goes wrong.**
