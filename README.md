@@ -186,7 +186,7 @@ Now that your Zigbee chip's UART connection is exposed via WBRG1 module to your 
 
 If you want to learn more about that, you could enter the bootloader of your Zigbee chip manually and use "xmodem" directly, e. g. with minicom. But there are also a bunch of tools out there to automate this. I successfully tried NabuCasa's [Universal Silabs Flasher](https://github.com/NabuCasa/universal-silabs-flasher):
 ```
-universal-silabs-flasher --device socket://192.168.0.76:80 flash --firmware "/path/to/your/gecko-bootloader-firmware-file.gbl"
+universal-silabs-flasher --device socket://<your-gateway-ip>:80 flash --firmware "/path/to/your/gecko-bootloader-firmware-file.gbl"
 ```
 I built a new, but still buggy firmware (and also created a .gbl file of the stock firmware you can flash back) [here](https://github.com/MattWestb/EFR32-FW/issues/6#issuecomment-2275368851). But you could also create one yourself using "Simplicity Studio" (to create a .bin file) and "Simplicity Commander" (to convert the .bin to .gbl afterwards).
 
