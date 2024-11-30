@@ -23,9 +23,20 @@ sudo dnf install minicom
 # now start it and connect to the gateway – use the right device path, in my case it's /dev/ttyUSB0
 minicom -b 115200 -D /dev/ttyUSB0
 ```
-If you plug in the UART adapter into your computer's USB port and connect the gateway to power afterwards, you will see the boot messages of your gateway flickering on the screen. 
 
-You'll have to do it the other way round in order to get into the command mode: Leave minicom open, unplug the gateway from power and the UART adapter from your PC – then reconnect it: This time power on the gateway first and plugin the UART adapter second. You will see nothing but a blinking cursor – but that's how it should be!
+You will need to boot your Gateway device in command mode, the simplest way of doing this is to
+1. Power off device
+2. Pull TX (The Gateway UART TX, listed above) to GND. Generally speaking this should be through a resistor (10KOhm or 1KOhm will do fine) on the off chance it boots and tried to drive the line. I am not responsible if you do not use a resistor and you burn out a port on the MCU!
+3. With the device TX pulled to GND, power on the device
+4. Disconnect the TX pull to GND
+5. Connect the UART adapter
+
+You can perform these steps with the USB to Serial connected, though it is sometimes simpler to access the pins without it. 
+
+If you get this wrong, you will see the system messages of your gateway flickering away on the screen. And you will have to re-try.
+The simplest way of knowing if it has succeeded is that there will be no lights on the device.
+
+You will see nothing but a blinking cursor when you connect to your UART – but that's how it should be!
 
 Now enter minicom settings (pressing "ctrl" + "a" and then "o") and disable hardware flow control by entering "Serial port setup" and pressing "f". Press enter, close settings. Now press and hold ESC – if everything works fine, a shell "#" will pop up. You can type in "?" and press enter to see a list of available commmands:
 ```
