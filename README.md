@@ -23,9 +23,20 @@ sudo dnf install minicom
 # now start it and connect to the gateway – use the right device path, in my case it's /dev/ttyUSB0
 minicom -b 115200 -D /dev/ttyUSB0
 ```
-If you plug in the UART adapter into your computer's USB port and connect the gateway to power afterwards, you will see the boot messages of your gateway flickering on the screen. 
 
-You'll have to do it the other way round in order to get into the command mode: Leave minicom open, unplug the gateway from power and the UART adapter from your PC – then reconnect it: This time power on the gateway first and plugin the UART adapter second. You will see nothing but a blinking cursor – but that's how it should be!
+You will need to boot your Gateway device in command mode, the simplest way of doing this is to
+1. Power off device
+2. Pull TX (The Gateway UART TX, listed above) to GND. Generally speaking this should be through a resistor (10KOhm or 1KOhm will do fine) on the off chance it boots and tried to drive the line. I am not responsible if you do not use a resistor and you burn out a port on the MCU!
+3. With the device TX pulled to GND, power on the device
+4. Disconnect the TX pull to GND
+5. Connect the UART adapter
+
+You can perform these steps with the USB to Serial connected, though it is sometimes simpler to access the pins without it. 
+
+If you get this wrong, you will see the system messages of your gateway flickering away on the screen. And you will have to re-try.
+The simplest way of knowing if it has succeeded is that there will be no lights on the device.
+
+You will see nothing but a blinking cursor when you connect to your UART – but that's how it should be!
 
 Now enter minicom settings (pressing "ctrl" + "a" and then "o") and disable hardware flow control by entering "Serial port setup" and pressing "f". Press enter, close settings. Now press and hold ESC – if everything works fine, a shell "#" will pop up. You can type in "?" and press enter to see a list of available commmands:
 ```
@@ -193,3 +204,44 @@ I built a new, but still buggy firmware (and also created a .gbl file of the sto
 For me, the flashing process hangs at 100% – it seems to work fine, though: If I wait only a few seconds and then repower the device, the Zigbee chip boots up with the new firmware.
 
 **Please note that there is always a risk that you can (soft-)brick your device while flashing a new firmware to it. Do it at your own risk! You might need your USB UART adapter again or an SWD debugger for the ZS3L module in case anything goes wrong.**
+
+I struggles significantly with the previous step 7a.
+To get around it, I utilised a few very messy steps, of which I will not really go into, though suffice to say that my hair is now significantly sorter, and my hate for random threads which have random information has increased significantly. 
+
+Here is [said link](https://github.com/MattWestb/EFR32-FW/issues/6#issuecomment-2504717529), it pretty much follows through on all the relevant things to note - though please download the following WBRG1 firmware [Zigbee_Gateway_WebAP_01a.zip](https://github.com/user-attachments/files/18051370/Zigbee_Gateway_WebAP_01a.zip). It's written in Arduino, and pretty much does the same thing as the aformentioned firmware. You'll need to re-set it up. Though it creates a convenient AP  for you, the password is `GW_Password`.
+Download the relevant ZS3L firmware [G01-pro-ncp-uart-hw_4.zip](https://github.com/user-attachments/files/18051375/G01-pro-ncp-uart-hw_4.zip)
+
+Here it gets super annoying, but bare with the steps:
+1) Power off device
+2) Power On device  and immediately press the  button on the front twice. You'll get a notification it is putting the zigbee device into bootloader mode, either via the flashy lights. (red, 500ms. Blue, 500ms, repeat x5) or if you are connected via serial, then in human readable english
+
+At this point you'll need socat installed, or whatever you flavor of linux wants
+```
+sudo apt install socat
+```
+then create a virtual COM port:
+```
+sudo socat -d -d pty,link=/dev/ttyVA00,echo=0,perm=0777 pty,link=/dev/ttyVB00,echo=0,perm=0777
+```
+Bind the VCP to the socket created on the WBRG1
+```
+socat TCP4:192.168.2.<Your IP here>:80 /dev/ttyVA00,b115200,raw,echo=0
+```
+Connect via Minicom:
+```
+minicom -b 115200 -o -D /dev/ttyVB00
+```
+
+Now you should be connected directly to the ZS3L - via the WBRG1 acting as a socket to serial translation, You should now have a bootloader bunch of options. Simply hitting `?` or enter should re-print the list of options. You'll want `1` for the upload of firmware.
+You'll start seeing a bunch of "C"'s appearing on the screen waiting for an upload to start.
+```
+ctrl+a then s (for send)
+xmodem
+<navigate to your firmware file .gbl>
+<wait>
+<it will take a minute or two>
+```
+
+Handy tips for minicom: Space key will highlight a thing, double space will enter a directory. 
+
+Once happy, you can basically exit out of all your socat magic and close the myriad of terminals open and enjoy your updated zigbee access point.
